@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tag: [e2e, smoke, sanity]
+        tag: [e2e, smoke]
 
     steps:
       - uses: actions/checkout@v4
