@@ -1,4 +1,4 @@
-name: Playwright Allure Matrix
+name: Playwright Tests
 
 on:
   workflow_dispatch:
@@ -8,14 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tag: [e2e, smoke]
-    name: Run ${{ matrix.tag }} tests
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+        tag: [e2e, smoke, sanity]
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -28,8 +26,20 @@ jobs:
       - name: Run ${{ matrix.tag }} tests
         run: npx playwright test --grep @${{ matrix.tag }}
 
-      - name: Upload allure results
+      - name: Upload Allure results
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.tag }}
-          path: ./allure-results
+          path: allure-results
+
+  trigger-merge-report:
+    needs: test_matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Merge Report Workflow
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          repository: <your-org>/<your-repo>
+          workflow: merge-report.yml
+          ref: main
