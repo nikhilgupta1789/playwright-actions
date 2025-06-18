@@ -55,7 +55,7 @@ jobs:
 
       - name: Push Allure report to gh-pages branch
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
