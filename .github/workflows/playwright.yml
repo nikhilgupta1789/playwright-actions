@@ -17,6 +17,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Test PAT auth (dry)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
+        run: |
+          curl -H "Authorization: token ${GH_TOKEN}" https://api.github.com/user    
+
       - name: Install dependencies
         run: npm ci
 
