@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.tag }}
-          path: ${{ env.ALLURE_RESULTS }}
+          path: allure-results
 
   allure-report:
     name: Generate & Publish Allure Report
@@ -55,8 +55,8 @@ jobs:
 
       - name: Merge Allure results
         run: |
-          mkdir -p $ALLURE_RESULTS
-          find downloaded-results -type d -name "allure-results-*" -exec cp -r {}/* $ALLURE_RESULTS/ \;
+          mkdir -p allure-results
+          find downloaded-results -type d -name "allure-results-*" -exec cp -r {}/* allure-results/ \;
 
       - name: Checkout gh-pages branch for history
         run: |
@@ -67,19 +67,19 @@ jobs:
       - name: Copy Allure history (if exists)
         run: |
           if [ -d "gh-pages/history" ]; then
-            mkdir -p $ALLURE_RESULTS/history
-            cp -r gh-pages/history/* $ALLURE_RESULTS/history/
+            mkdir -p allure-results/history
+            cp -r gh-pages/history/* allure-results/history/
           fi
 
       - name: Generate Allure report
         run: |
-          npx allure generate $ALLURE_RESULTS -o allure-report --clean
+          npx allure generate allure-results -o allure-report --clean
 
       - name: Copy history to report
         run: |
           mkdir -p allure-report/history
-          if [ -d "$ALLURE_RESULTS/history" ]; then
-            cp -r $ALLURE_RESULTS/history/* allure-report/history/
+          if [ -d "allure-results/history" ]; then
+            cp -r allure-results/history/* allure-report/history/
           fi
 
       - name: Deploy Allure report to gh-pages branch
