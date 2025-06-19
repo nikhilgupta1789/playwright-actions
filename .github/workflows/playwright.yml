@@ -51,6 +51,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1. Download test result artifacts
       - name: Download Allure results for all tags
         uses: actions/download-artifact@v4
         with:
@@ -59,6 +60,21 @@ jobs:
       - name: Dubug List downloaded-results contents
         run: ls -lR downloaded-results || echo "No artifacts downloaded"    
 
+       # 2. Fetch previous history from gh-pages branch **before merging results**
+      - name: Checkout gh-pages branch for history
+        run: |
+          git fetch origin gh-pages:gh-pages || true
+          git worktree add gh-pages gh-pages
+        continue-on-error: true
+
+      - name: Copy Allure history (if exists)
+        run: |
+          if [ -d "gh-pages/history" ]; then
+            mkdir -p allure-results/history
+            cp -r gh-pages/history/* allure-results/history/
+          fi  
+
+      # 3. Merge Allure results
       - name: Merge Allure results
         run: |
           mkdir -p allure-results
@@ -71,22 +87,10 @@ jobs:
       - name: Debug List merged allure-results
         run: ls -lR allure-results || echo "No merged allure-results"
 
-      - name: Checkout gh-pages branch for history
-        run: |
-          git fetch origin gh-pages:gh-pages || true
-          git worktree add gh-pages gh-pages
-        continue-on-error: true
-
-      - name: Copy Allure history (if exists)
-        run: |
-          if [ -d "gh-pages/history" ]; then
-            mkdir -p allure-results/history
-            cp -r gh-pages/history/* allure-results/history/
-          fi
-
       - name: Install Allure commandline
         run: npm install -g allure-commandline --save-dev
 
+      # 4. Generate and deploy the report
       - name: Generate Allure report
         run: |
           npx allure generate allure-results -o allure-report --clean
