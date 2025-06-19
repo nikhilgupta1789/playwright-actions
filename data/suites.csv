@@ -1,3 +1,3 @@
 "DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
-"","2147","@e2e Login test","","Thu Jun 19 17:22:37 UTC 2025","passed","Thu Jun 19 17:22:40 UTC 2025","","login.spec.ts","",""
-"","2087","@smoke Dashboard test","","Thu Jun 19 17:22:26 UTC 2025","passed","Thu Jun 19 17:22:28 UTC 2025","","dashboard.spec.ts","",""
+"","2779","@e2e Login test","","Thu Jun 19 18:17:02 UTC 2025","passed","Thu Jun 19 18:17:05 UTC 2025","","login.spec.ts","",""
+"","1821","@smoke Dashboard test","","Thu Jun 19 18:18:27 UTC 2025","passed","Thu Jun 19 18:18:28 UTC 2025","","dashboard.spec.ts","",""
