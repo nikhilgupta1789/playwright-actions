@@ -62,8 +62,12 @@ jobs:
       - name: Merge Allure results
         run: |
           mkdir -p allure-results
-          find downloaded-results -type d -name "allure-results-*" -exec cp -r {}/* allure-results/ \;
-
+          for d in downloaded-results/allure-results-*; do
+            if [ -d "$d" ]; then
+              cp "$d"/* allure-results/ || echo "No files to copy from $d"
+            fi
+          done
+          
       - name: Debug List merged allure-results
         run: ls -lR allure-results || echo "No merged allure-results"
 
