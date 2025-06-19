@@ -71,6 +71,9 @@ jobs:
             cp -r gh-pages/history/* allure-results/history/
           fi
 
+      - name: Install Allure commandline
+        run: npm install -g allure-commandline --save-dev
+
       - name: Generate Allure report
         run: |
           npx allure generate allure-results -o allure-report --clean
