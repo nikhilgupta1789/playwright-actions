@@ -52,6 +52,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: downloaded-results
+          
+      - name: Debug: List downloaded-results contents
+        run: ls -lR downloaded-results || echo "No artifacts downloaded"     
 
       - name: Merge Allure results
         run: |
