@@ -1,79 +1,97 @@
-name: Playwright Tests + Allure + Deploy
+name: Playwright Tests with Allure
 
 on:
-  workflow_dispatch:
-
-permissions:
-  contents: write
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  test_matrix:
+  test:
+    name: Run Playwright tests (${{ matrix.tag }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
         tag: [e2e, smoke]
-
+    env:
+      ALLURE_RESULTS: allure-results
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      - name: Run Playwright tests with tag ${{ matrix.tag }}
+        run: |
+          npx playwright test --grep "@${{ matrix.tag }}" --reporter=line
 
-      - name: Run tests for tag ${{ matrix.tag }}
-        run: npx playwright test --grep @${{ matrix.tag }}
-
-      - name: Upload allure-results for ${{ matrix.tag }}
+      - name: Upload Allure results artifact
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.tag }}
-          path: allure-results
+          path: ${{ env.ALLURE_RESULTS }}
 
-  generate_and_deploy_report:
-    needs: test_matrix
+  allure-report:
+    name: Generate & Publish Allure Report
+    needs: test
     runs-on: ubuntu-latest
-
+    env:
+      ALLURE_RESULTS: allure-results
+      ALLURE_HISTORY: allure-history
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download all allure-results artifacts
+      - name: Download Allure results for all tags
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          path: downloaded-results
 
-      - name: Merge allure results
+      - name: Merge Allure results
         run: |
-          mkdir combined_result
-          cp -r artifacts/allure-results-e2e/* combined_result/
-          cp -r artifacts/allure-results-smoke/* combined_result/
+          mkdir -p $ALLURE_RESULTS
+          find downloaded-results -type d -name "allure-results-*" -exec cp -r {}/* $ALLURE_RESULTS/ \;
 
-      - name: Install Allure CLI
-        run: npm install -g allure-commandline
-
-      - name: Generate consolidated Allure report (single file)
+      - name: Checkout gh-pages branch for history
         run: |
-          allure generate --single-file combined_result --clean -o allure-report
+          git fetch origin gh-pages:gh-pages || true
+          git worktree add gh-pages gh-pages
+        continue-on-error: true
 
-      - name: Configure Git for push
+      - name: Copy Allure history (if exists)
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -d "gh-pages/history" ]; then
+            mkdir -p $ALLURE_RESULTS/history
+            cp -r gh-pages/history/* $ALLURE_RESULTS/history/
+          fi
 
-      - name: Deploy report to gh-pages branch
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
+      - name: Generate Allure report
         run: |
-          git clone --branch gh-pages --depth 1 https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }} gh-pages
-          rm -rf gh-pages/*
+          npx allure generate $ALLURE_RESULTS -o allure-report --clean
+
+      - name: Copy history to report
+        run: |
+          mkdir -p allure-report/history
+          if [ -d "$ALLURE_RESULTS/history" ]; then
+            cp -r $ALLURE_RESULTS/history/* allure-report/history/
+          fi
+
+      - name: Deploy Allure report to gh-pages branch
+        run: |
           cp -r allure-report/* gh-pages/
-          cd gh-pages
-          git add .
-          git commit -m "Update Allure report - $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
-          git push origin gh-pages
+          git -C gh-pages add .
+          git -C gh-pages config user.email "github-actions[bot]@users.noreply.github.com"
+          git -C gh-pages config user.name "github-actions[bot]"
+          git -C gh-pages commit -m "Update Allure report [skip ci]" || echo "No changes to commit"
+          git -C gh-pages push origin gh-pages
+
+      - name: Cleanup worktree
+        if: always()
+        run: |
+          git worktree remove gh-pages --force
