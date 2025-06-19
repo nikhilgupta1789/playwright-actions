@@ -56,10 +56,16 @@ jobs:
         with:
           path: downloaded-results
 
+      - name: Dubug List downloaded-results contents
+        run: ls -lR downloaded-results || echo "No artifacts downloaded"    
+
       - name: Merge Allure results
         run: |
           mkdir -p allure-results
           find downloaded-results -type d -name "allure-results-*" -exec cp -r {}/* allure-results/ \;
+
+      - name: Debug List merged allure-results
+        run: ls -lR allure-results || echo "No merged allure-results"
 
       - name: Checkout gh-pages branch for history
         run: |
@@ -81,12 +87,18 @@ jobs:
         run: |
           npx allure generate allure-results -o allure-report --clean
 
+      - name: Debug List generated allure-report
+        run: ls -lR allure-report || echo "No allure-report found"    
+
       - name: Copy history to report
         run: |
           mkdir -p allure-report/history
           if [ -d "allure-results/history" ]; then
             cp -r allure-results/history/* allure-report/history/
           fi
+
+      - name: Debug List gh-pages folder before deploy
+        run: ls -lR gh-pages || echo "No gh-pages folder"    
 
       - name: Deploy Allure report to gh-pages branch
         run: |
