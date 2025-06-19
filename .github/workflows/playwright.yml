@@ -3,6 +3,9 @@ name: Playwright Tests with Allure
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write  
+
 jobs:
   test:
     name: Run Playwright tests (${{ matrix.tag }})
